@@ -32,6 +32,7 @@ void loop() {
   // Verifica se há dados disponíveis no RS485
   if (SerialPort.available()) {
     String received = SerialPort.readStringUntil(';'); // Lê até o delimitador ;
+    Serial.print("Mensagem recebida: ");
     Serial.println(received);
   }
 

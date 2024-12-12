@@ -1,11 +1,15 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
+#include <HX711.h>
+HX711 scale;
 
 // Defina os pinos RX, TX, DE e RE
 #define RS485_RX_PIN 16  // RX1
 #define RS485_TX_PIN 17  // TX1
 #define RS485_DE_PIN 4  // Pino DE (Driver Enable)
 #define RS485_RE_PIN 15  // Pino RE (Receiver Enable)
+
+double medidabruta = -1;
 
 HardwareSerial SerialPort(2); // UART1 para RS485
 
@@ -16,6 +20,10 @@ void setup() {
   // Configura UART1
   SerialPort.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
 
+  scale.begin(23, 22); // CONFIGURANDO OS PINOS DA BALANÇA
+  scale.set_scale(); // LIMPANDO O VALOR DE CALIBRACAO
+  scale.tare(); // ZERANDO A BALANÇA PARA DESCONSIDERAR A MASSA DA ESTRUTURA
+
   // Configura os pinos DE e RE
   pinMode(RS485_DE_PIN, OUTPUT);
   pinMode(RS485_RE_PIN, OUTPUT);
@@ -24,13 +32,21 @@ void setup() {
   digitalWrite(RS485_DE_PIN, HIGH); // Habilita transmissão
   digitalWrite(RS485_RE_PIN, HIGH); // Desabilita recepção
 
+
+
   Serial.println("Setup concluído. Pronto para transmitir.");
 }
 
 void loop() {
-  // Envia mensagem via RS485
-  Serial.println("Enviando mensagem via RS485...");
-  SerialPort.print("Mensagem de teste via RS485;");
 
-  delay(100); // Aguarde antes de repetir
+  scale.power_up(); // LIGANDO O SENSOR
+  medidabruta = scale.get_value(5); // SALVANDO NA VARIAVEL O VALOR BRUTO DA MÉDIA DE 5 MEDIDAS
+  scale.power_down(); // DESLIGANDO O SENSOR  
+
+  // Envia mensagem via RS485
+  Serial.println("Medida enviada");
+  SerialPort.print(medidabruta);
+
+
+  delay(50); // Aguarde antes de repetir
 }
