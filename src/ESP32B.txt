@@ -1,0 +1,73 @@
+#include <Arduino.h>
+#include <HardwareSerial.h>
+
+// Defina os pinos RX, TX, DE e RE
+#define RS485_RX_PIN 16  // RX1
+#define RS485_TX_PIN 17  // TX1
+
+#define RS485_DE_RE_PIN_ESPA 15  // MAX485A - DE/RE
+#define RS485_DE_RE_PIN_ESPB 4   // MAX485B - DE/RE
+
+HardwareSerial SerialPort(2); // UART2 para RS485
+
+void habilitarRecepcao(int pin) {
+  digitalWrite(pin, LOW); // Desabilita transmissão, habilita recepção
+}
+
+void habilitarTransmissao(int pin) {
+  digitalWrite(pin, HIGH); // Habilita transmissão, desabilita recepção
+}
+
+void setup() {
+  Serial.begin(115200); // Monitor Serial (debug)
+  Serial.println("Inicializando ESP32B como mestre...");
+
+  // Configura UART2
+  SerialPort.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
+  SerialPort.setTimeout(50);
+
+  // Configura os pinos DE/RE como saída
+  pinMode(RS485_DE_RE_PIN_ESPA, OUTPUT);
+  pinMode(RS485_DE_RE_PIN_ESPB, OUTPUT);
+
+  // Inicializa no modo recepção para ambos
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPA);
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPB);
+
+  Serial.println("ESP32B pronto para controlar o fluxo de comunicação...");
+}
+
+void loop() {
+  // 1. ESP32B envia comando para ESP32A
+  Serial.println("ESP32B: Enviando comando ao ESP32A...");
+  habilitarTransmissao(RS485_DE_RE_PIN_ESPB); // MAX485B no modo transmissão
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPA);   // MAX485A no modo recepção
+
+  SerialPort.print("COMANDO_DO_ESP32B;");
+  delay(100); // Pequeno atraso para garantir a transmissão
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPB); // MAX485B volta ao modo recepção
+
+  // 2. ESP32B aguarda resposta do ESP32A
+  Serial.println("ESP32B: Aguardando resposta do ESP32A...");
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPB); // MAX485B no modo recepção
+  habilitarTransmissao(RS485_DE_RE_PIN_ESPA); // MAX485A no modo transmissão
+
+  unsigned long timeout = millis() + 2000; // Timeout de 2 segundos
+  while (!SerialPort.available() && millis() < timeout) {
+    delay(10); // Aguarda dados
+  }
+
+  if (SerialPort.available()) {
+    String resposta = SerialPort.readStringUntil(';');
+    Serial.print("ESP32B: Resposta recebida -> ");
+    Serial.println(resposta);
+  } else {
+    Serial.println("ESP32B: Timeout sem resposta do ESP32A.");
+  }
+
+  // 3. Volta ao estado inicial (MAX485A e MAX485B em recepção)
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPA);
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPB);
+
+  delay(1000); // Aguarda antes de repetir o ciclo
+}

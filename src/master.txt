@@ -4,33 +4,43 @@
 // Defina os pinos RX, TX, DE e RE
 #define RS485_RX_PIN 16  // RX1
 #define RS485_TX_PIN 17  // TX1
-#define RS485_DE_PIN 4  // Pino DE (Driver Enable)
-#define RS485_RE_PIN 15  // Pino RE (Receiver Enable)
 
-HardwareSerial SerialPort(2); // UART1 para RS485
+#define RS485_DE_RE_PIN_ESPA 15  // MAX485A - DE/RE
+#define RS485_DE_RE_PIN_ESPB 4   // MAX485B - DE/RE
+
+HardwareSerial SerialPort(2); // UART2 para RS485
+
+void habilitarRecepcao(int pin) {
+  digitalWrite(pin, LOW); // Desabilita transmissão, habilita recepção
+}
+
+void habilitarTransmissao(int pin) {
+  digitalWrite(pin, HIGH); // Habilita transmissão, desabilita recepção
+}
 
 void setup() {
   Serial.begin(115200); // Monitor Serial (debug)
-  Serial.println("Inicializando transmissor RS485...");
+  Serial.println("Inicializando ESP32A como transmissor...");
 
-  // Configura UART1
+  // Configura UART2
   SerialPort.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
+  SerialPort.setTimeout(50);
 
-  // Configura os pinos DE e RE
-  pinMode(RS485_DE_PIN, OUTPUT);
-  pinMode(RS485_RE_PIN, OUTPUT);
+  // Configura os pinos DE/RE como saída
+  pinMode(RS485_DE_RE_PIN_ESPA, OUTPUT);
+  pinMode(RS485_DE_RE_PIN_ESPB, OUTPUT);
 
-  // Configura como modo transmissão inicial
-  digitalWrite(RS485_DE_PIN, HIGH); // Habilita transmissão
-  digitalWrite(RS485_RE_PIN, HIGH); // Desabilita recepção
+  // Inicialmente configura o MAX485A para transmissão
+  habilitarTransmissao(RS485_DE_RE_PIN_ESPA); // MAX485A - Transmissão
+  habilitarRecepcao(RS485_DE_RE_PIN_ESPB);    // MAX485B - Recepção (não utilizado no ESP32A)
 
-  Serial.println("Setup concluído. Pronto para transmitir.");
+  Serial.println("Pronto para transmitir dados...");
 }
 
 void loop() {
-  // Envia mensagem via RS485
-  Serial.println("Enviando mensagem via RS485...");
-  SerialPort.print("Mensagem de teste via RS485;");
+  // ENVIA DADOS VIA MAX485A
+  Serial.println("Enviando dados via MAX485A...");
+  SerialPort.print("Mensagem de teste do ESP32A via MAX485A;");
 
-  delay(100); // Aguarde antes de repetir
+  delay(1000); // Aguarda antes de tentar enviar novamente
 }

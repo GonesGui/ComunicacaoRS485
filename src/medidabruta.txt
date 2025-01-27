@@ -9,19 +9,13 @@ HX711 scale;
 #define RS485_DE_PIN 4  // Pino DE (Driver Enable)
 #define RS485_RE_PIN 15  // Pino RE (Receiver Enable)
 
-#define PINO_ENTRADA 13
+#define PINO_ENTRADA 14
 
 double medidabruta = -1;
-double medidaFiltrada = -1;
 
 bool zerar = false;
 
-unsigned long tempoInicio = 0; // Armazena o tempo no início do loop
-unsigned long tempoFim = 0;    // Armazena o tempo no fim do loop
-unsigned long duracaoLoop = 0; // Duração em ms
-
 HardwareSerial SerialPort(2); // UART1 para RS485
-
 
 void setup() {
   Serial.begin(115200); // Monitor Serial (debug)
@@ -42,28 +36,37 @@ void setup() {
   digitalWrite(RS485_DE_PIN, HIGH); // Habilita transmissão
   digitalWrite(RS485_RE_PIN, HIGH); // Desabilita recepção
 
-  pinMode(PINO_ENTRADA, INPUT);
+  pinMode(PINO_ENTRADA, INPUT_PULLDOWN);
 
   Serial.println("Setup concluído. Pronto para transmitir.");
 }
 
 void loop() {
-    tempoInicio = millis(); // Marca o início do loop
+
+    int estado = digitalRead(PINO_ENTRADA);
+
+    if (estado == HIGH) {
+    if(!zerar){
+    zerar = true;
+    digitalWrite(23, LOW);
+    digitalWrite(22, LOW);
+    scale.tare();
+    delay(500); // Aguarde antes de repetir
+    }
+  } else {
+    zerar = false;
+  }
+
 
   scale.power_up(); // LIGANDO O SENSOR
-  medidabruta = scale.read_average(40); // SALVANDO NA VARIAVEL O VALOR BRUTO DA MÉDIA DE 40 MEDIDAS
+  medidabruta = scale.get_value(5); // SALVANDO NA VARIAVEL O VALOR BRUTO DA MÉDIA DE 5 MEDIDAS
   scale.power_down(); // DESLIGANDO O SENSOR  
 
-  
   // Envia mensagem via RS485
   Serial.println("Medida enviada");
-  Serial.println(medidabruta);
+   Serial.println(medidabruta);
   SerialPort.print(medidabruta);
 
-  tempoFim = millis(); // Marca o fim do loop
-  duracaoLoop = tempoFim - tempoInicio;
-  Serial.print("Duracao loop:");
-  Serial.println(duracaoLoop);
 
-  delay(10); // Aguarde antes de repetir
+  delay(50); // Aguarde antes de repetir
 }

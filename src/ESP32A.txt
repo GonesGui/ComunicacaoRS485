@@ -1,0 +1,32 @@
+#include <Arduino.h>
+#include <HardwareSerial.h>
+
+// Defina os pinos RX e TX do ESP32A conectados ao isolador
+#define RS485_RX_PIN 16  // RX1
+#define RS485_TX_PIN 17  // TX1
+
+HardwareSerial SerialPort(2); // UART2 para RS485
+
+void setup() {
+  Serial.begin(115200); // Monitor Serial (debug)
+  Serial.println("Inicializando ESP32A como escravo...");
+
+  // Configura UART2
+  SerialPort.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
+  SerialPort.setTimeout(50);
+
+  Serial.println("ESP32A pronto para comunicação...");
+}
+
+void loop() {
+  // Verifica se recebeu dados via RS485
+  if (SerialPort.available()) {
+    String comando = SerialPort.readStringUntil(';');
+    Serial.print("ESP32A: Comando recebido -> ");
+    Serial.println(comando);
+
+    // Após receber, envia uma resposta
+    Serial.println("ESP32A: Enviando resposta ao mestre...");
+    SerialPort.print("Resposta do ESP32A;");
+  }
+}

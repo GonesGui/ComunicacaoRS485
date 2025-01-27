@@ -9,6 +9,8 @@ HX711 scale;
 #define RS485_DE_PIN 4  // Pino DE (Driver Enable)
 #define RS485_RE_PIN 15  // Pino RE (Receiver Enable)
 
+#define PINO_ENTRADA 12
+
 double medidabruta = -1;
 
 HardwareSerial SerialPort(2); // UART1 para RS485
@@ -32,12 +34,21 @@ void setup() {
   digitalWrite(RS485_DE_PIN, HIGH); // Habilita transmissão
   digitalWrite(RS485_RE_PIN, HIGH); // Desabilita recepção
 
-
+  pinMode(PINO_ENTRADA, INPUT);
 
   Serial.println("Setup concluído. Pronto para transmitir.");
 }
 
 void loop() {
+
+  int estado = digitalRead(PINO_ENTRADA);
+
+  if (estado == HIGH) {
+    Serial.println("Pino 12 está HIGH");
+  } else {
+    Serial.println("Pino 12 está LOW");
+  }
+
 
   scale.power_up(); // LIGANDO O SENSOR
   medidabruta = scale.get_value(5); // SALVANDO NA VARIAVEL O VALOR BRUTO DA MÉDIA DE 5 MEDIDAS

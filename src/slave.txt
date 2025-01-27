@@ -4,8 +4,9 @@
 // Defina os pinos RX, TX, DE e RE
 #define RS485_RX_PIN 16  // RX1
 #define RS485_TX_PIN 17  // TX1
-#define RS485_DE_PIN 4  // Pino DE (Driver Enable)
-#define RS485_RE_PIN 15  // Pino RE (Receiver Enable)
+#define RS485_DE_RE_PIN_ESPA 15  // MAX485A
+#define RS485_DE_RE_PIN_ESPB 4  // MAX485B
+
 
 HardwareSerial SerialPort(2); // UART1 para RS485
 
@@ -17,13 +18,13 @@ void setup() {
   SerialPort.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
   SerialPort.setTimeout(50);
 
-  // Configura os pinos DE e RE
-  pinMode(RS485_DE_PIN, OUTPUT);
-  pinMode(RS485_RE_PIN, OUTPUT);
+  // Configura os pinos DE e RE de ambos os ESP32
+  pinMode(RS485_DE_RE_PIN_ESPA, OUTPUT);
+  pinMode(RS485_DE_RE_PIN_ESPB, OUTPUT);
 
-  // Configura como modo recepção inicial
-  digitalWrite(RS485_DE_PIN, LOW);  // Desabilita transmissão
-  digitalWrite(RS485_RE_PIN, LOW); // Habilita recepção
+ // Configura como modo recepção e transmissao dos módulos MAX485
+  digitalWrite(RS485_DE_RE_PIN_ESPA, LOW);  // Desabilita transmissão  Habilita recepção
+  digitalWrite(RS485_DE_RE_PIN_ESPB, HIGH);  // Habilita transmissão  Desabilita recepção
 
   Serial.print("Setup concluído. Pronto para receber dados.");
 }
